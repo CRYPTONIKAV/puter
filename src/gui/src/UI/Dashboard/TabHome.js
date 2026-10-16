@@ -21,6 +21,7 @@ import UIWindowSaveAccount from '../UIWindowSaveAccount.js';
 import { formatCredits, formatDollarsFromMicrocents, usageIsCredits } from './credits.js';
 import { addonCreditsRemaining, usageBudget } from './usageBudget.js';
 import { appIconAttrs } from '../../helpers/appIcon.js';
+import { refreshLaunchApps } from '../../helpers/refreshLaunchApps.js';
 import { isOrgSeat, orgSeatTeamName } from './orgSeat.js';
 
 // How long a completed usage load stays fresh enough to skip a repeat. Long
@@ -391,19 +392,8 @@ const TabHome = {
         // Always refetch: gating on an empty list froze "Recently used" for the
         // whole session (apps launched after load never appeared). loadUsageData
         // refreshes on the same activate/focus triggers, so this stays in step.
-        try {
-            window.launch_apps = await $.ajax({
-                url: `${window.api_origin}/get-launch-apps?icon_size=64`,
-                type: 'GET',
-                async: true,
-                contentType: 'application/json',
-                headers: {
-                    Authorization: `Bearer ${window.auth_token}`,
-                },
-            });
-        } catch (e) {
-            console.error('Failed to load launch apps:', e);
-        }
+        // Shared with the Start menu so both surfaces see the same list.
+        await refreshLaunchApps();
         $el_window
             .find('.bento-recent-apps-container')
             .html(buildRecentAppsHTML());
