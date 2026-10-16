@@ -23,6 +23,7 @@ import UIPopover from './UIPopover.js';
 import launch_app from '../helpers/launchApp.js';
 import UIContextMenu from './UIContextMenu.js';
 import { appIconAttrs, appIconSrc } from '../helpers/appIcon.js';
+import { refreshLaunchApps } from '../helpers/refreshLaunchApps.js';
 
 async function UITaskbar (options) {
     window.global_element_id++;
@@ -107,20 +108,9 @@ async function UITaskbar (options) {
                 center_horizontally: true,
             });
 
-            // In the rare case that launch_apps is not populated yet, get it from the server
-            // then populate the popover
-            if ( !window.launch_apps || !window.launch_apps.recent || window.launch_apps.recent.length === 0 ) {
-                // get launch apps
-                window.launch_apps = await $.ajax({
-                    url: `${window.api_origin }/get-launch-apps?icon_size=64`,
-                    type: 'GET',
-                    async: true,
-                    contentType: 'application/json',
-                    headers: {
-                        'Authorization': `Bearer ${window.auth_token}`,
-                    },
-                });
-            }
+            // Revalidate against the server: the cached list goes stale when
+            // apps are created or deleted elsewhere (e.g. Dev Centre).
+            await refreshLaunchApps();
 
             let apps_str = '';
 
